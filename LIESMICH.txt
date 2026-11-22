@@ -1,0 +1,17 @@
+Installierbare PWA - 3D-Druck Kalkulation
+
+Dateien (alle zusammen in einen Ordner hochladen):
+index.html, manifest.webmanifest, sw.js, icon-192.png, icon-512.png
+
+Voraussetzung: Die Dateien muessen ueber HTTPS erreichbar sein (z.B. kostenloses
+GitHub Pages: Repository anlegen, Dateien hochladen, in den Repository-
+Einstellungen unter "Pages" die Veroeffentlichung vom Branch main, Ordner
+Root, aktivieren). Aktuelle Bedienung bitte auf der Seite des Anbieters pruefen.
+
+Installieren: Seite in Chrome auf dem Handy oeffnen, im Menue
+"App installieren" bzw. "Zum Startbildschirm hinzufuegen" waehlen.
+Am PC: Chrome/Edge zeigt in der Adressleiste ein Installationssymbol.
+
+Nach einer Aenderung an index.html in sw.js die Version (druckkalk-v1) erhoehen,
+sonst zeigt der Cache die alte Datei.
+Daten liegen im Browser jedes Geraets; Uebertragung ueber Daten > Als Datei speichern / Importieren.

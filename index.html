@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><title>3D-Druck Kalkulation</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><meta name="theme-color" content="#00796b">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#eef1f0;--card:#fff;--tx:#1a2321;--mu:#5b6967;--ac:#00796b;--ac2:#e0f2ef;--bd:#cfd8d6;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111716;--card:#1a2321;--tx:#e6eeec;--mu:#98a7a4;--ac:#4db6a6;--ac2:#1f3532;--bd:#2f3d3a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111716;--card:#1a2321;--tx:#e6eeec;--mu:#98a7a4;--ac:#4db6a6;--ac2:#1f3532;--bd:#2f3d3a;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:760px;margin:0 auto;padding:12px}
+h1{font-size:1.25rem;margin:4px 0 10px}
+nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px}
+nav button{flex:none;border:1px solid var(--bd);background:var(--card);color:var(--tx);padding:8px 12px;border-radius:8px;font:inherit;cursor:pointer}
+nav button.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:10px}
+label{display:block;font-size:.85rem;color:var(--mu);margin:8px 0 3px}
+input,select,textarea{width:100%;font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:8px}
+textarea{min-height:200px;font-family:ui-monospace,Consolas,monospace;font-size:.8rem}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0 10px;align-items:end}
+@media (min-width:480px){.g label{min-height:2.6em;display:flex;align-items:flex-end}}
+button.b{border:1px solid var(--ac);background:var(--ac);color:#fff;border-radius:6px;padding:8px 14px;font:inherit;cursor:pointer;margin:8px 8px 0 0}
+button.b.s{background:transparent;color:var(--ac)}
+button.d{border:1px solid var(--bd);background:transparent;color:var(--mu);border-radius:6px;padding:6px 10px;font:inherit;cursor:pointer;margin-top:8px}
+.r{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bd)}
+.r.t{font-weight:700;font-size:1.15rem;border:0;color:var(--ac)}
+.mu{color:var(--mu);font-size:.85rem}
+.seg{display:flex;gap:0}.seg button{flex:1;padding:9px;border:1px solid var(--ac);background:transparent;color:var(--ac);font:inherit;cursor:pointer}
+.seg button:first-child{border-radius:6px 0 0 6px}.seg button:last-child{border-radius:0 6px 6px 0}
+.seg button.on{background:var(--ac);color:#fff}
+.chk{display:flex;gap:8px;align-items:center;margin:6px 0}.chk input[type=checkbox]{width:auto}.chk .n{flex:1}.chk input[type=number]{width:90px}
+</style></head><body><main>
+<h1>3D-Druck Kalkulation</h1>
+<nav id="nav"></nav><div id="v"></div>
+</main>
+<script>
+var KEY='druckkalk_v1',S,tab='calc',C={p:0,f:0,g:0,h:0,m:0,st:{}};
+function def(){return{printers:['Bambulab P1P','Bambulab A1 mini','Bambulab X2d','Kobra S1'].map(function(n){return{name:n,watt:0,preis:0,std:0}}),filaments:[],steps:[],set:{strom:0,mode:'privat',pack:0,aufschlag:0,mwst:0}}}
+function load(){try{var r=localStorage.getItem(KEY);if(r){S=JSON.parse(r);return}}catch(e){}S=def()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+load();
+(function(){var W={'Bambulab P1P':110,'Bambulab A1 mini':80,'Bambulab X2d':250},ch=0;S.printers.forEach(function(p){if(!p.watt&&W[p.name]){p.watt=W[p.name];ch=1}});if(ch)save()})();
+var L={printers:{t:'Drucker',f:[['name','Name','text'],['watt','Leistung (W)','number'],['preis','Anschaffungspreis (€)','number'],['std','Erwartete Lebensdauer (Std)','number']],n:{name:'Neuer Drucker',watt:0,preis:0,std:0}},
+filaments:{t:'Filamente',f:[['name','Name','text'],['preis','Preis pro kg (€)','number']],n:{name:'Neues Filament',preis:0}},
+steps:{t:'Arbeitsgänge',f:[['name','Name','text'],['rate','Satz pro Stunde (€)','number']],n:{name:'Neuer Arbeitsgang',rate:0}}};
+var TABS=[['calc','Rechner'],['printers','Drucker'],['filaments','Filamente'],['steps','Arbeitsgänge'],['set','Einstellungen'],['data','Daten']];
+function $(i){return document.getElementById(i)}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
+function eur(x){return x.toLocaleString('de-DE',{style:'currency',currency:'EUR'})}
+function go(t){tab=t;$('nav').innerHTML=TABS.map(function(x){return'<button class="'+(x[0]==t?'on':'')+'" data-t="'+x[0]+'">'+x[1]+'</button>'}).join('');
+ if(t=='calc')rCalc();else if(t=='set')rSet();else if(t=='data')rData();else rList(t)}
+$('nav').onclick=function(e){var t=e.target.getAttribute('data-t');if(t)go(t)};
+function rList(k){var c=L[k],a=S[k];
+ var h='<p class="mu">'+(k=='printers'?'Leistung = durchschnittliche Leistungsaufnahme beim Drucken in Watt, nicht die Maximalleistung. Vorgaben: P1P und A1 mini (PLA, laut Bambu-Wiki), X2D (Dauerleistung PLA, laut Datenblatt). Kobra S1 und Lebensdauer selbst eintragen.':'Werte selbst eintragen oder aus geprüften Quellen übernehmen.')+'</p>';
+ h+=a.map(function(o,i){return'<div class="card"><div class="g">'+c.f.map(function(f){return'<div><label>'+f[1]+'</label><input type="'+f[2]+'" step="any" data-k="'+k+'" data-i="'+i+'" data-f="'+f[0]+'" value="'+esc(o[f[0]])+'"></div>'}).join('')+'</div><button class="d" data-del="'+k+'" data-i="'+i+'">Entfernen</button></div>'}).join('');
+ if(!a.length)h+='<p class="mu">Noch keine Einträge.</p>';
+ h+='<button class="b" data-add="'+k+'">'+c.t+' hinzufügen</button>';$('v').innerHTML=h}
+function rSet(){var s=S.set;$('v').innerHTML='<div class="card"><div class="g">'+
+ [['strom','Strompreis (€ pro kWh)'],['pack','Verpackung/Versand pro Auftrag (€, gewerblich)'],['aufschlag','Gewinnaufschlag (%, gewerblich)'],['mwst','Mehrwertsteuer (%, gewerblich)']].map(function(f){return'<div><label>'+f[1]+'</label><input type="number" step="any" data-s="'+f[0]+'" value="'+s[f[0]]+'"></div>'}).join('')+'</div></div>'}
+function rData(){$('v').innerHTML='<div class="card"><p class="mu">Alle Werte als JSON. Zum Übertragen auf ein anderes Gerät: Text kopieren, dort einfügen und importieren, oder eine Datei laden.</p><textarea id="ta">'+esc(JSON.stringify(S,null,1))+'</textarea><button class="b" id="cp">Text kopieren</button><button class="b s" id="im">Importieren</button><button class="b s" id="dl">Als Datei speichern</button><label>Oder JSON-Datei laden</label><input type="file" id="fi" accept=".json,application/json"><p id="msg" class="mu"></p></div>'}
+function imp(t){try{var o=JSON.parse(t);if(!o.printers||!o.filaments||!o.steps||!o.set)throw 0;S=o;save();$('msg').textContent='Import erfolgreich.';$('ta').value=JSON.stringify(S,null,1)}catch(e){$('msg').textContent='Import fehlgeschlagen: Das ist kein gültiges Kalkulations-JSON.'}}
+function rCalc(){var s=S.set,g=s.mode=='gewerblich';
+ var po=S.printers.map(function(p,i){return'<option value="'+i+'"'+(C.p==i?' selected':'')+'>'+esc(p.name)+'</option>'}).join('');
+ var fo=S.filaments.map(function(p,i){return'<option value="'+i+'"'+(C.f==i?' selected':'')+'>'+esc(p.name)+'</option>'}).join('');
+ var h='<div class="card"><div class="seg"><button data-m="privat" class="'+(g?'':'on')+'">Privat</button><button data-m="gewerblich" class="'+(g?'on':'')+'">Gewerblich</button></div>'+
+ '<div class="g"><div><label>Drucker</label><select id="cp_">'+(po||'<option>–</option>')+'</select></div><div><label>Filament</label><select id="cf_">'+(fo||'<option>Zuerst Filament anlegen</option>')+'</select></div>'+
+ '<div><label>Filamentverbrauch (g)</label><input type="number" step="any" id="cg" value="'+C.g+'"></div><div><label>Druckzeit Stunden</label><input type="number" step="any" id="ch" value="'+C.h+'"></div><div><label>Druckzeit Minuten</label><input type="number" step="any" id="cm" value="'+C.m+'"></div></div>'+
+ '<label>Arbeitsgänge (Minuten)</label>'+(S.steps.map(function(x,i){return'<div class="chk"><span class="n">'+esc(x.name)+'</span><input type="number" step="any" data-st="'+i+'" value="'+(C.st[i]||0)+'"></div>'}).join('')||'<p class="mu">Keine Arbeitsgänge angelegt.</p>')+'</div><div class="card" id="res"></div>';
+ $('v').innerHTML=h;upd()}
+function num(x){return parseFloat(x)||0}
+function upd(){var s=S.set,g=s.mode=='gewerblich',p=S.printers[C.p],f=S.filaments[C.f],hr=num(C.h)+num(C.m)/60;
+ var fil=f?num(C.g)/1000*f.preis:0,st=p?hr*p.watt/1000*s.strom:0,vs=p&&p.std>0?hr*p.preis/p.std:0,ar=0;
+ S.steps.forEach(function(x,i){ar+=num(C.st[i])/60*x.rate});
+ var self=fil+st+vs+ar,rows=[['Filament',fil],['Strom',st],['Maschinenverschleiß',vs],['Arbeitszeit',ar]],h;
+ h=rows.map(function(r){return'<div class="r"><span>'+r[0]+'</span><span>'+eur(r[1])+'</span></div>'}).join('');
+ h+='<div class="r"><span><b>Selbstkosten</b></span><b>'+eur(self)+'</b></div>';
+ if(g){var gw=self*s.aufschlag/100,net=self+gw+s.pack,mw=net*s.mwst/100;
+  h+='<div class="r"><span>Gewinnaufschlag ('+s.aufschlag+' % auf Selbstkosten)</span><span>'+eur(gw)+'</span></div><div class="r"><span>Verpackung/Versand</span><span>'+eur(s.pack)+'</span></div><div class="r"><span>Netto</span><span>'+eur(net)+'</span></div><div class="r"><span>Mehrwertsteuer ('+s.mwst+' %)</span><span>'+eur(mw)+'</span></div><div class="r t"><span>Brutto</span><span>'+eur(net+mw)+'</span></div>'}
+ else h+='<div class="r t"><span>Gesamt (privat)</span><span>'+eur(self)+'</span></div>';
+ h+='<p class="mu">Verschleiß = Druckzeit × Anschaffungspreis ÷ Lebensdauer des Druckers. Beträge hängen von deinen Eingaben ab.</p>';$('res').innerHTML=h}
+$('v').addEventListener('input',function(e){var t=e.target,d=t.dataset;
+ if(d.k){S[d.k][d.i][d.f]=d.f=='name'?t.value:num(t.value);save()}
+ else if(d.s){S.set[d.s]=num(t.value);save()}
+ else if(d.st!==undefined){C.st[d.st]=t.value;upd()}
+ else if(t.id=='cg'){C.g=t.value;upd()}else if(t.id=='ch'){C.h=t.value;upd()}else if(t.id=='cm'){C.m=t.value;upd()}
+ else if(t.id=='cp_'){C.p=+t.value;upd()}else if(t.id=='cf_'){C.f=+t.value;upd()}});
+$('v').addEventListener('click',function(e){var t=e.target,d=t.dataset;
+ if(d.add){S[d.add].push(JSON.parse(JSON.stringify(L[d.add].n)));save();rList(d.add)}
+ else if(d.del){if(confirm('Eintrag wirklich entfernen?')){S[d.del].splice(d.i,1);save();C={p:0,f:0,g:C.g,h:C.h,m:C.m,st:{}};rList(d.del)}}
+ else if(d.m){S.set.mode=d.m;save();rCalc()}
+ else if(t.id=='cp'){var ta=$('ta');ta.select();try{navigator.clipboard.writeText(ta.value).then(function(){$('msg').textContent='Kopiert.'},function(){$('msg').textContent='Text ist markiert: bitte mit Strg+C bzw. „Kopieren" übernehmen.'})}catch(x){$('msg').textContent='Text ist markiert: bitte kopieren.'}}
+ else if(t.id=='dl'){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([$('ta').value],{type:'application/json'}));a.download='druckkalkulation.json';a.click()}
+ else if(t.id=='im')imp($('ta').value)});
+$('v').addEventListener('change',function(e){if(e.target.id=='fi'&&e.target.files[0]){var r=new FileReader();r.onload=function(){imp(r.result)};r.readAsText(e.target.files[0])}});
+go('calc');
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(function(){})}
+</script></body></html>
