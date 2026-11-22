@@ -35,7 +35,7 @@ button.d{border:1px solid var(--bd);background:transparent;color:var(--mu);borde
 <nav id="nav"></nav><div id="v"></div>
 </main>
 <script>
-var KEY='druckkalk_v1',S,tab='calc',C={p:0,f:0,g:0,h:0,m:0,st:{}};
+var KEY='druckkalk_v1',S,tab='calc',C={p:0,f:0,g:0,h:0,m:0,te:1,pl:1,st:{}};
 function def(){return{printers:['Bambulab P1P','Bambulab A1 mini','Bambulab X2d','Kobra S1'].map(function(n){return{name:n,watt:0,preis:0,std:0}}),filaments:[],steps:[],set:{strom:0,mode:'privat',pack:0,aufschlag:0,mwst:0}}}
 function load(){try{var r=localStorage.getItem(KEY);if(r){S=JSON.parse(r);return}}catch(e){}S=def()}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
@@ -65,38 +65,39 @@ function rCalc(){var s=S.set,g=s.mode=='gewerblich';
  var fo=S.filaments.map(function(p,i){return'<option value="'+i+'"'+(C.f==i?' selected':'')+'>'+esc(p.name)+'</option>'}).join('');
  var h='<div class="card"><div class="seg"><button data-m="privat" class="'+(g?'':'on')+'">Privat</button><button data-m="gewerblich" class="'+(g?'on':'')+'">Gewerblich</button></div>'+
  '<div class="g"><div><label>Drucker</label><select id="cp_">'+(po||'<option>–</option>')+'</select></div><div><label>Filament</label><select id="cf_">'+(fo||'<option>Zuerst Filament anlegen</option>')+'</select></div>'+
- '<div><label>Filamentverbrauch (g)</label><input type="number" step="any" id="cg" value="'+C.g+'"></div><div><label>Druckzeit Stunden</label><input type="number" step="any" id="ch" value="'+C.h+'"></div><div><label>Druckzeit Minuten</label><input type="number" step="any" id="cm" value="'+C.m+'"></div></div>'+
- '<label>Arbeitsgänge (Minuten)</label>'+(S.steps.map(function(x,i){return'<div class="chk"><span class="n">'+esc(x.name)+'</span><input type="number" step="any" data-st="'+i+'" value="'+(C.st[i]||0)+'"></div>'}).join('')||'<p class="mu">Keine Arbeitsgänge angelegt.</p>')+'</div><div class="card" id="res"></div><button class="b" id="sv">Ergebnis als Bild speichern</button>';
+ '<div><label>Filamentverbrauch pro Druckplatte (g)</label><input type="number" step="any" id="cg" value="'+C.g+'"></div><div><label>Druckzeit pro Platte, Stunden</label><input type="number" step="any" id="ch" value="'+C.h+'"></div><div><label>Druckzeit pro Platte, Minuten</label><input type="number" step="any" id="cm" value="'+C.m+'"></div><div><label>Teile pro Druckplatte</label><input type="number" step="any" id="ct" value="'+C.te+'"></div><div><label>Anzahl Druckplatten</label><input type="number" step="any" id="cn" value="'+C.pl+'"></div></div>'+
+ '<label>Arbeitsgänge (Minuten, einmal pro Auftrag)</label>'+(S.steps.map(function(x,i){return'<div class="chk"><span class="n">'+esc(x.name)+'</span><input type="number" step="any" data-st="'+i+'" value="'+(C.st[i]||0)+'"></div>'}).join('')||'<p class="mu">Keine Arbeitsgänge angelegt.</p>')+'</div><div class="card" id="res"></div><button class="b" id="sv">Ergebnis als Bild speichern</button>';
  $('v').innerHTML=h;upd()}
 function savePng(){
  var s=S.set,p=S.printers[C.p],f=S.filaments[C.f],rows=[].slice.call(document.querySelectorAll('#res .r')).map(function(r){return[r.children[0].textContent,r.children[1].textContent,r.classList.contains('t')]});
- var head=['3D-Druck Kalkulation',new Date().toLocaleString('de-DE'),'Modus: '+(s.mode=='gewerblich'?'Gewerblich':'Privat'),'Drucker: '+(p?p.name:'-'),'Filament: '+(f?f.name:'-')+', '+num(C.g)+' g','Druckzeit: '+num(C.h)+' h '+num(C.m)+' min'];
+ var head=['3D-Druck Kalkulation',new Date().toLocaleString('de-DE'),'Modus: '+(s.mode=='gewerblich'?'Gewerblich':'Privat'),'Drucker: '+(p?p.name:'-'),'Filament: '+(f?f.name:'-')+', '+num(C.g)+' g pro Platte','Druckzeit pro Platte: '+num(C.h)+' h '+num(C.m)+' min','Druckplatten: '+num(C.pl)+', Teile pro Platte: '+num(C.te)+', Teile gesamt: '+num(C.pl)*num(C.te)];
  S.steps.forEach(function(x,i){if(num(C.st[i])>0)head.push('Arbeitsgang: '+x.name+', '+num(C.st[i])+' min')});
  var W=900,lh=44,H=50+44+34*(head.length-1)+20+rows.length*lh+30,cv=document.createElement('canvas');cv.width=W;cv.height=H;var x=cv.getContext('2d');
  x.fillStyle='#fff';x.fillRect(0,0,W,H);x.textBaseline='middle';
  var y=50;head.forEach(function(t,i){x.fillStyle='#1a2321';x.font=(i==0?'bold 30px ':'22px ')+'system-ui,Arial,sans-serif';x.textAlign='left';x.fillText(t,40,y);y+=i==0?44:34});
  y+=20;rows.forEach(function(r){x.font=(r[2]?'bold 28px ':'24px ')+'system-ui,Arial,sans-serif';x.fillStyle=r[2]?'#00796b':'#1a2321';x.textAlign='left';x.fillText(r[0],40,y);x.textAlign='right';x.fillText(r[1],W-40,y);x.strokeStyle='#cfd8d6';x.beginPath();x.moveTo(40,y+lh/2);x.lineTo(W-40,y+lh/2);x.stroke();y+=lh});
  cv.toBlob(function(b){var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='druckkalkulation.png';a.click()})}
+function fmt(x){return x.toLocaleString('de-DE')}
 function num(x){return parseFloat(x)||0}
-function upd(){var s=S.set,g=s.mode=='gewerblich',p=S.printers[C.p],f=S.filaments[C.f],hr=num(C.h)+num(C.m)/60;
- var fil=f?num(C.g)/1000*f.preis:0,st=p?hr*p.watt/1000*s.strom:0,vs=p&&p.std>0?hr*p.preis/p.std:0,ar=0;
+function upd(){var s=S.set,g=s.mode=='gewerblich',p=S.printers[C.p],f=S.filaments[C.f],pl=Math.max(num(C.pl),0),te=Math.max(num(C.te),0),tot=pl*te,hr=(num(C.h)+num(C.m)/60)*pl;
+ var fil=f?num(C.g)*pl/1000*f.preis:0,st=p?hr*p.watt/1000*s.strom:0,vs=p&&p.std>0?hr*p.preis/p.std:0,ar=0;
  S.steps.forEach(function(x,i){ar+=num(C.st[i])/60*x.rate});
  var self=fil+st+vs+ar,rows=[['Filament',fil],['Strom',st],['Maschinenverschleiß',vs],['Arbeitszeit',ar]],h;
- h=rows.map(function(r){return'<div class="r"><span>'+r[0]+'</span><span>'+eur(r[1])+'</span></div>'}).join('');
+ h='<div class="r"><b>'+fmt(pl)+(pl==1?' Druckplatte':' Druckplatten')+' mit insgesamt '+fmt(tot)+(tot==1?' Teil':' Teilen')+'</b></div>'+rows.map(function(r){return'<div class="r"><span>'+r[0]+'</span><span>'+eur(r[1])+'</span></div>'}).join('');
  h+='<div class="r"><span><b>Selbstkosten</b></span><b>'+eur(self)+'</b></div>';
  if(g){var gw=self*s.aufschlag/100,net=self+gw+s.pack,mw=net*s.mwst/100;
-  h+='<div class="r"><span>Gewinnaufschlag ('+s.aufschlag+' % auf Selbstkosten)</span><span>'+eur(gw)+'</span></div><div class="r"><span>Verpackung/Versand</span><span>'+eur(s.pack)+'</span></div><div class="r"><span>Netto</span><span>'+eur(net)+'</span></div><div class="r"><span>Mehrwertsteuer ('+s.mwst+' %)</span><span>'+eur(mw)+'</span></div><div class="r t"><span>Brutto</span><span>'+eur(net+mw)+'</span></div>'}
- else h+='<div class="r t"><span>Gesamt (privat)</span><span>'+eur(self)+'</span></div>';
+  h+='<div class="r"><span>Gewinnaufschlag ('+s.aufschlag+' % auf Selbstkosten)</span><span>'+eur(gw)+'</span></div><div class="r"><span>Verpackung/Versand</span><span>'+eur(s.pack)+'</span></div><div class="r"><span>Netto</span><span>'+eur(net)+'</span></div><div class="r"><span>Mehrwertsteuer ('+s.mwst+' %)</span><span>'+eur(mw)+'</span></div><div class="r t"><span>Brutto</span><span>'+eur(net+mw)+'</span></div>'+(tot>0?'<div class="r"><span>Preis pro Teil (brutto)</span><span>'+eur((net+mw)/tot)+'</span></div>':'')}
+ else h+='<div class="r t"><span>Gesamt (privat)</span><span>'+eur(self)+'</span></div>'+(tot>0?'<div class="r"><span>Preis pro Teil</span><span>'+eur(self/tot)+'</span></div>':'');
  $('res').innerHTML=h}
 $('v').addEventListener('input',function(e){var t=e.target,d=t.dataset;
  if(d.k){S[d.k][d.i][d.f]=d.f=='name'?t.value:num(t.value);save()}
  else if(d.s){S.set[d.s]=num(t.value);save()}
  else if(d.st!==undefined){C.st[d.st]=t.value;upd()}
- else if(t.id=='cg'){C.g=t.value;upd()}else if(t.id=='ch'){C.h=t.value;upd()}else if(t.id=='cm'){C.m=t.value;upd()}
+ else if(t.id=='cg'){C.g=t.value;upd()}else if(t.id=='ch'){C.h=t.value;upd()}else if(t.id=='cm'){C.m=t.value;upd()}else if(t.id=='ct'){C.te=t.value;upd()}else if(t.id=='cn'){C.pl=t.value;upd()}
  else if(t.id=='cp_'){C.p=+t.value;upd()}else if(t.id=='cf_'){C.f=+t.value;upd()}});
 $('v').addEventListener('click',function(e){var t=e.target,d=t.dataset;
  if(d.add){S[d.add].push(JSON.parse(JSON.stringify(L[d.add].n)));save();rList(d.add)}
- else if(d.del){if(confirm('Eintrag wirklich entfernen?')){S[d.del].splice(d.i,1);save();C={p:0,f:0,g:C.g,h:C.h,m:C.m,st:{}};rList(d.del)}}
+ else if(d.del){if(confirm('Eintrag wirklich entfernen?')){S[d.del].splice(d.i,1);save();C={p:0,f:0,g:C.g,h:C.h,m:C.m,te:C.te,pl:C.pl,st:{}};rList(d.del)}}
  else if(d.m){S.set.mode=d.m;save();rCalc()}
  else if(t.id=='cp'){var ta=$('ta');ta.select();try{navigator.clipboard.writeText(ta.value).then(function(){$('msg').textContent='Kopiert.'},function(){$('msg').textContent='Text ist markiert: bitte mit Strg+C bzw. „Kopieren" übernehmen.'})}catch(x){$('msg').textContent='Text ist markiert: bitte kopieren.'}}
  else if(t.id=='sv')savePng();
